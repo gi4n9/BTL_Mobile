@@ -1,0 +1,83 @@
+# Flutter/Dart specific
+*.dart_tool/
+*.packages
+*.flutter-plugins
+*.flutter-plugins-dependencies
+*.iml
+*.idea/
+*.log
+*.lock
+*.g.dart
+
+# Build output
+build/
+*.apk
+*.aab
+*.app
+
+# Generated files
+generated/
+*.generated.dart
+
+# Dependencies
+.dart_tool/
+packages/
+pubspec.lock  # Có thể giữ lại nếu bạn muốn lock version, nhưng thường ignore trong teamwork
+
+# iOS specific
+ios/Flutter/App.framework
+ios/Flutter/Flutter.framework
+ios/Flutter/Generated.xcconfig
+ios/Flutter/app.flx
+ios/Flutter/app.zip
+ios/Flutter/flutter_export_environment.sh
+ios/Flutter/flutter_assets/
+ios/Pods/
+ios/.symlinks/
+ios/*.ipa
+
+# Android specific
+android/.gradle/
+android/app/build/
+android/local.properties
+android/*.keystore
+android/*.jks
+
+# macOS specific
+macos/Flutter/ephemeral/
+macos/Flutter/Flutter.framework
+macos/Flutter/Generated.xcconfig
+
+# Web specific
+web/plugins/
+web/assets/
+
+# Miscellaneous
+*.DS_Store
+*.swp
+*.swo
+*.temp
+*.tmp
+*.bak
+*.backup
+
+# Environment
+.env
+*.env.*
+!.env.example
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Runtime data
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage
+coverage/
+lcov.info
