@@ -1,0 +1,2 @@
+C:/CODE/Phenikaa/BTL_Mobile/my_app/android/app/.cxx/Debug/481w4z6r/x86/CMakeFiles/edit_cache.dir
+C:/CODE/Phenikaa/BTL_Mobile/my_app/android/app/.cxx/Debug/481w4z6r/x86/CMakeFiles/rebuild_cache.dir

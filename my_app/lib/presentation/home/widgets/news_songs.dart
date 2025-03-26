@@ -1,113 +1,117 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:my_app/common/helpers/is_dark_mode.dart';
-import 'package:my_app/core/config/constants/app_urls.dart';
-import 'package:my_app/core/config/theme/app_colors.dart';
-import 'package:my_app/presentation/home/bloc/news_songs_cubit.dart';
-import 'package:my_app/presentation/song_player/pages/song_player.dart';
+import 'package:just_audio/just_audio.dart';
+import 'package:my_app/service_locator.dart';
+import 'package:my_app/domain/usecases/songs/get_news_songs.dart';
 
-import '../../../domain/entities/song/song.dart';
-import '../bloc/news_songs_state.dart';
-
-class NewsSongs extends StatelessWidget {
+class NewsSongs extends StatefulWidget {
   const NewsSongs({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => NewsSongsCubit()..getNewsSongs(),
-      child: SizedBox(
-          height: 200,
-          child: BlocBuilder<NewsSongsCubit, NewsSongsState>(
-            builder: (context, state) {
-              if (state is NewsSongsLoading) {
-                return Container(
-                    alignment: Alignment.center,
-                    child: const CircularProgressIndicator());
-              }
+  State<NewsSongs> createState() => _NewsSongsState();
+}
 
-              if (state is NewsSongsLoaded) {
-                return _songs(state.songs);
-              }
+class _NewsSongsState extends State<NewsSongs> {
+  late AudioPlayer _audioPlayer;
+  bool isPlaying = false;
+  String? currentSongId;
 
-              return Container();
-            },
-          )),
-    );
+  @override
+  void initState() {
+    super.initState();
+    _audioPlayer = AudioPlayer();
   }
 
-  Widget _songs(List<SongEntity> songs) {
-    return ListView.separated(
-        scrollDirection: Axis.horizontal,
-        shrinkWrap: true,
-        itemBuilder: (context, index) {
-          return GestureDetector(
-            onTap: () {
-              Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (BuildContext context) => SongPlayerPage(
-                            songEntity: songs[index],
-                          )));
-            },
-            child: SizedBox(
-              width: 160,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Container(
-                      decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(30),
-                          image: DecorationImage(
-                              fit: BoxFit.cover,
-                              image: NetworkImage(
-                                  '${AppURLs.coverFirestorage}${songs[index].artist} - ${songs[index].title}.jpg?${AppURLs.mediaAlt}'))),
-                      child: Align(
-                        alignment: Alignment.bottomRight,
-                        child: Container(
-                          height: 40,
-                          width: 40,
-                          transform: Matrix4.translationValues(10, 10, 0),
-                          decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: context.isDarkMode
-                                  ? AppColors.darkGrey
-                                  : const Color(0xffE6E6E6)),
-                          child: Icon(
-                            Icons.play_arrow_rounded,
-                            color: context.isDarkMode
-                                ? const Color(0xff959595)
-                                : const Color(0xff555555),
-                          ),
+  @override
+  void dispose() {
+    _audioPlayer.dispose();
+    super.dispose();
+  }
+
+  Future<void> playSong(String songUrl, String songId) async {
+    try {
+      print("Playing song with URL: $songUrl");
+      if (currentSongId == songId && isPlaying) {
+        await _audioPlayer.pause();
+        setState(() {
+          isPlaying = false;
+        });
+      } else {
+        await _audioPlayer.setUrl(songUrl);
+        await _audioPlayer.play();
+        setState(() {
+          isPlaying = true;
+          currentSongId = songId;
+        });
+      }
+    } catch (e) {
+      print("Error playing song: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error playing song: $e')),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder(
+      future: sl<GetNewsSongsUseCase>().call(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (snapshot.hasError) {
+          return Center(child: Text('Error: ${snapshot.error}'));
+        }
+        if (!snapshot.hasData) {
+          return const Center(child: Text('No data available'));
+        }
+        return snapshot.data!.fold(
+          (l) => Center(child: Text('Error: $l')),
+          (songs) => songs.isEmpty
+              ? const Center(child: Text('No songs found'))
+              : ListView.builder(
+                  itemCount: songs.length,
+                  itemBuilder: (context, index) {
+                    final song = songs[index];
+                    print(
+                        "Song URL: ${song.songUrl}, Image URL: ${song.imageUrl}");
+                    return ListTile(
+                      leading:
+                          song.imageUrl != null && song.imageUrl!.isNotEmpty
+                              ? Image.network(
+                                  song.imageUrl!,
+                                  width: 50,
+                                  height: 50,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) =>
+                                      const Icon(Icons.broken_image),
+                                )
+                              : const Icon(Icons.music_note),
+                      title: Text(song.title),
+                      subtitle: Text(song.artist),
+                      trailing: IconButton(
+                        icon: Icon(
+                          currentSongId == song.songId && isPlaying
+                              ? Icons.pause
+                              : Icons.play_arrow,
                         ),
+                        onPressed: () {
+                          if (song.songUrl != null &&
+                              song.songUrl!.isNotEmpty) {
+                            playSong(song.songUrl!, song.songId);
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                  content: Text('Song URL not available')),
+                            );
+                          }
+                        },
                       ),
-                    ),
-                  ),
-                  const SizedBox(
-                    height: 10,
-                  ),
-                  Text(
-                    songs[index].title,
-                    style: const TextStyle(
-                        fontWeight: FontWeight.w600, fontSize: 16),
-                  ),
-                  const SizedBox(
-                    height: 5,
-                  ),
-                  Text(
-                    songs[index].artist,
-                    style: const TextStyle(
-                        fontWeight: FontWeight.w400, fontSize: 12),
-                  )
-                ],
-              ),
-            ),
-          );
-        },
-        separatorBuilder: (context, index) => const SizedBox(
-              width: 14,
-            ),
-        itemCount: songs.length);
+                    );
+                  },
+                ),
+        );
+      },
+    );
   }
 }
