@@ -1,7 +1,19 @@
+buildscript {
+    repositories {
+        google()        // Kho lưu trữ của Google cho buildscript
+        mavenCentral()  // Kho lưu trữ Maven Central cho buildscript
+    }
+    dependencies {
+        classpath 'com.google.gms:google-services:4.4.2' // Plugin Google Services
+        classpath 'com.android.tools.build:gradle:8.1.0' // Android Gradle plugin
+        classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.0' // Kotlin plugin (nếu dùng Kotlin)
+    }
+}
+
 allprojects {
     repositories {
-        google()
-        mavenCentral()
+        google()        // Kho lưu trữ của Google cho dự án
+        mavenCentral()  // Kho lưu trữ Maven Central cho dự án
     }
 }
 
