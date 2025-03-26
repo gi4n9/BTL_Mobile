@@ -1,7 +1,12 @@
+// lib/domain/entities/auth/user.dart
 class UserEntity {
-  String? fullName;
-  String? email;
-  String? imageURL;
+  final String? email;
+  final String? fullName;
+  final String? imageURL; // Thêm thuộc tính imageURL
 
-  UserEntity({this.fullName, this.email, this.imageURL});
+  const UserEntity({
+    this.email,
+    this.fullName,
+    this.imageURL, // Thêm vào constructor
+  });
 }

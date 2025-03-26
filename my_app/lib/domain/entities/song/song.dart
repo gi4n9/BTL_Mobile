@@ -1,3 +1,4 @@
+// lib/domain/entities/song/song.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class SongEntity {

@@ -7,7 +7,6 @@ import 'package:my_app/core/config/theme/app_colors.dart';
 import 'package:my_app/presentation/home/widgets/news_songs.dart';
 import 'package:my_app/presentation/home/widgets/play_list.dart';
 import 'package:my_app/presentation/profile/pages/profile.dart';
-
 import '../../../common/widgets/appbar/app_bar.dart';
 
 class HomePage extends StatefulWidget {
@@ -28,18 +27,27 @@ class _HomePageState extends State<HomePage>
   }
 
   @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: BasicAppbar(
         hideBack: true,
         action: IconButton(
-            onPressed: () {
-              Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (BuildContext context) => const ProfilePage()));
-            },
-            icon: const Icon(Icons.person)),
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (BuildContext context) => const ProfilePage(),
+              ),
+            );
+          },
+          icon: const Icon(Icons.person),
+        ),
         title: SvgPicture.asset(
           AppVectors.logo,
           height: 40,
@@ -57,14 +65,14 @@ class _HomePageState extends State<HomePage>
               child: TabBarView(
                 controller: _tabController,
                 children: [
-                  const NewsSongs(),
+                  const NewsSongs(), // Không cần bọc BlocProvider ở đây
                   Container(),
                   Container(),
-                  Container()
+                  Container(),
                 ],
               ),
             ),
-            const PlayList()
+            const PlayList(),
           ],
         ),
       ),
@@ -85,9 +93,14 @@ class _HomePageState extends State<HomePage>
               alignment: Alignment.bottomRight,
               child: Padding(
                 padding: const EdgeInsets.only(right: 60),
-                child: Image.asset(AppImages.homeArtist),
+                child: Image.asset(
+                  AppImages.homeArtist,
+                  errorBuilder: (context, error, stackTrace) {
+                    return const Icon(Icons.broken_image);
+                  },
+                ),
               ),
-            )
+            ),
           ],
         ),
       ),
@@ -117,7 +130,7 @@ class _HomePageState extends State<HomePage>
         Text(
           'Podcasts',
           style: TextStyle(fontWeight: FontWeight.w500, fontSize: 16),
-        )
+        ),
       ],
     );
   }

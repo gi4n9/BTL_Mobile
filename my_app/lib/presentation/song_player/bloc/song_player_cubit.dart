@@ -3,48 +3,73 @@ import 'package:just_audio/just_audio.dart';
 import 'package:my_app/presentation/song_player/bloc/song_player_state.dart';
 
 class SongPlayerCubit extends Cubit<SongPlayerState> {
-  AudioPlayer audioPlayer = AudioPlayer();
+  final AudioPlayer _audioPlayer = AudioPlayer();
+  int songDurationInSeconds = 217; // Giá trị mặc định, sẽ được cập nhật
 
-  Duration songDuration = Duration.zero;
-  Duration songPosition = Duration.zero;
+  SongPlayerCubit() : super(SongPlayerLoading());
 
-  SongPlayerCubit() : super(SongPlayerLoading()) {
-    audioPlayer.positionStream.listen((position) {
-      songPosition = position;
-      updateSongPlayer();
-    });
-
-    audioPlayer.durationStream.listen((duration) {
-      songDuration = duration!;
-    });
-  }
-
-  void updateSongPlayer() {
-    emit(SongPlayerLoaded());
-  }
-
-  Future<void> loadSong(String url) async {
-    print(url);
+  Future<void> loadSong(String songUrl, int durationInSeconds) async {
     try {
-      await audioPlayer.setUrl(url);
-      emit(SongPlayerLoaded());
+      emit(SongPlayerLoading());
+      songDurationInSeconds = durationInSeconds; // Lưu duration từ SongEntity
+      await _audioPlayer.setAsset(songUrl);
+      _audioPlayer.positionStream.listen((position) {
+        emit(SongPlayerLoaded(
+          isPlaying: _audioPlayer.playing,
+          currentPosition: position,
+          totalDuration: Duration(seconds: songDurationInSeconds),
+        ));
+      });
+      _audioPlayer.durationStream.listen((duration) {
+        emit(SongPlayerLoaded(
+          isPlaying: _audioPlayer.playing,
+          currentPosition: _audioPlayer.position,
+          totalDuration: Duration(seconds: songDurationInSeconds),
+        ));
+      });
+      emit(SongPlayerLoaded(
+        isPlaying: false,
+        currentPosition: Duration.zero,
+        totalDuration: Duration(seconds: songDurationInSeconds),
+      ));
     } catch (e) {
-      emit(SongPlayerFailure());
+      emit(SongPlayerFailure(e.toString()));
     }
   }
 
-  void playOrPauseSong() {
-    if (audioPlayer.playing) {
-      audioPlayer.stop();
-    } else {
-      audioPlayer.play();
+  Future<void> playOrPauseSong() async {
+    try {
+      if (_audioPlayer.playing) {
+        await _audioPlayer.pause();
+      } else {
+        await _audioPlayer.play();
+      }
+      emit(SongPlayerLoaded(
+        isPlaying: _audioPlayer.playing,
+        currentPosition: _audioPlayer.position,
+        totalDuration: Duration(seconds: songDurationInSeconds),
+      ));
+    } catch (e) {
+      emit(SongPlayerFailure(e.toString()));
     }
-    emit(SongPlayerLoaded());
+  }
+
+  Future<void> seek(Duration position) async {
+    try {
+      await _audioPlayer.seek(position);
+      emit(SongPlayerLoaded(
+        isPlaying: _audioPlayer.playing,
+        currentPosition: _audioPlayer.position,
+        totalDuration: Duration(seconds: songDurationInSeconds),
+      ));
+    } catch (e) {
+      emit(SongPlayerFailure(e.toString()));
+    }
   }
 
   @override
   Future<void> close() {
-    audioPlayer.dispose();
+    _audioPlayer.dispose();
     return super.close();
   }
 }
